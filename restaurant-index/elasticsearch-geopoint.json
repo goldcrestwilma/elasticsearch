@@ -1,0 +1,130 @@
+{
+	"info": {
+		"_postman_id": "eb86d189-a093-461e-aa41-01c2ceffe524",
+		"name": "Study",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24573872"
+	},
+	"item": [
+		{
+			"name": "ES 인덱스 생성",
+			"request": {
+				"method": "PUT",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"mappings\": {\n        \"dynamic\": \"strict\",\n        \"properties\": {\n            \"id\": {\n                \"type\": \"long\"\n            },\n            \"name\": {\n                \"type\": \"keyword\"\n            },\n            \"location\": {\n                \"type\": \"geo_point\"\n            },\n            \"rate\": {\n                \"type\": \"double\"\n            }\n        }\n    },\n    \"settings\": {\n        \"index\": {\n            \"number_of_shards\": \"1\",\n            \"number_of_replicas\": \"0\"\n        }\n    }\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9200/restaurant-index",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9200",
+					"path": [
+						"restaurant-index"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "ES 데이터 삽입",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\"index\":{\"_index\":\"restaurant-index\",\"_id\":1}}\n{\"name\":\"맥도날드서울시청점\",\"location\":{\"lat\":37.5668,\"lon\":126.9793},\"rate\":3.9}\n\n{\"index\":{\"_index\":\"restaurant-index\",\"_id\":2}}\n{\"name\":\"남포면옥\",\"location\":{\"lat\":37.5672,\"lon\":126.9819},\"rate\":3.7}\n\n{\"index\":{\"_index\":\"restaurant-index\",\"_id\":3}}\n{\"name\":\"청진옥\",\"location\":{\"lat\":37.5719,\"lon\":126.9795},\"rate\":3.9}\n\n{\"index\":{\"_index\":\"restaurant-index\",\"_id\":4}}\n{\"name\":\"명동칼국수\",\"location\":{\"lat\":37.5685623,\"lon\":126.9759419},\"rate\":4.1}\n\n{\"index\":{\"_index\":\"restaurant-index\",\"_id\":5}}\n{\"name\":\"암소서울\",\"location\":{\"lat\":37.5697911,\"lon\":126.9728243},\"rate\":4.6}\n\n{\"index\":{\"_index\":\"restaurant-index\",\"_id\":6}}\n{\"name\":\"무교동북어국집\",\"location\":{\"lat\":37.5679,\"lon\":126.9799},\"rate\":4.5}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9200/_bulk",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9200",
+					"path": [
+						"_bulk"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "geo_point script sort",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\": {\n        \"bool\": {\n            \"must\": {\n                \"match_all\": {}\n            }\n        }\n    },\n    \"from\": 0,\n    \"size\": 10,\n    \"sort\": [\n        {\n            \"_script\": {\n                \"type\": \"number\",\n                \"script\": {\n                    \"lang\": \"painless\",\n                    \"source\": \"doc['location'].arcDistance(params.lat, params.lon)\",\n                    \"params\": {\n                        \"lat\": 37.5692,\n                        \"lon\": 126.9787\n                    }\n                },\n                \"order\": \"asc\"\n            }\n        }\n    ],\n    \"aggs\": {},\n    \"explain\": true\n}\n// 37.5692 126.9787",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9200/restaurant-index/_search",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9200",
+					"path": [
+						"restaurant-index",
+						"_search"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "\bgeo_point sort",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"query\": {\n        \"bool\": {\n            \"must\": {\n                \"match_all\": {}\n            }\n        }\n    },\n    \"from\": 0,\n    \"size\": 10,\n    \"sort\": [\n        {\n            \"_geo_distance\": {\n                \"location\": {\n                    \"lat\": 37.5692,\n                    \"lon\": 126.9787\n                },\n                \"order\": \"asc\",\n                \"unit\": \"m\",\n                \"mode\": \"min\"\n            }\n        }\n    ],\n    \"aggs\": {}\n    //\"explain\": true\n}\n// 37.5692 126.9787",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:9200/restaurant-index/_search",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "9200",
+					"path": [
+						"restaurant-index",
+						"_search"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
