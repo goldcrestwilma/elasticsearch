@@ -1,3 +1,3 @@
 
-# elasticsearch 스터디
+# Elasticsearch 스터디
 - geo_point
